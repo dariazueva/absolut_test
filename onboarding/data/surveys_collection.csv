@@ -1,0 +1,3 @@
+id,title,business_type_id,business_direction_id
+1,restaurant_survey.csv,1,1
+2,cafe_survey.csv,1,3
