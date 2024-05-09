@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Анкета{% endblock %}
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        {% for question in questions %}
+          {% if forloop.counter <= 8 %}
+            <div class="card">
+                <div class="card-header">
+                    <p>{{ question.text }}</p>
+                    {% if question.pk == 4 %}
+                        <input type="checkbox" name="answer_{{ question.pk }}" value="1" class="larger-checkbox">
+                    {% elif question.pk == 5 %}
+                        <select name="answer_{{ question.pk }}">
+                            <option value="">Выберите тип</option>
+                            {% for business_type in business_types %}
+                                <option value="{{ business_type.id }}">{{ business_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    {% elif question.pk == 6 %}
+                        <select name="answer_{{ question.pk }}">
+                            <option value="">Выберите направление</option>
+                            {% for direction in business_directions %}
+                                <option value="{{ direction.id }}">{{ direction.name }}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <input type="text" name="answer_{{ question.pk }}" required>
+                    {% endif %}
+                </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+        <button type="submit">Следующие вопросы</button>
+    </form>
+{% endblock %}

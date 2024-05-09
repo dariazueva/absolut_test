@@ -4,10 +4,7 @@ import os
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from survey.models import (BusinessType,
-                           BusinessDirection,
-                           Survey,
-                           Question)
+from survey.models import BusinessDirection, BusinessType, Question, Survey
 
 
 def load_csv_data(file_name, model_class, fields_mapping):
@@ -16,7 +13,8 @@ def load_csv_data(file_name, model_class, fields_mapping):
         reader = csv.reader(file)
         next(reader)
         for row in reader:
-            data = {field: row[index] if index is not None and row[index] != '' else None
+            data = {field: row[index] if index is not None and row[index] != ''
+                    else None
                     for field, index in fields_mapping.items()}
             model_class.objects.get_or_create(**data)
 
@@ -59,4 +57,3 @@ class Command(BaseCommand):
         load_csv_data('cafe_survey.csv', Question,
                       {'text': 1, 'dynamic': 2, 'parent_question_id': 3,
                        'survey_id': 4})
-

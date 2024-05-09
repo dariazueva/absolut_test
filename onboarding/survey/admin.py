@@ -1,12 +1,7 @@
 from django.contrib import admin
 
-from survey.models import (BusinessType,
-                           BusinessDirection,
-                           Survey,
-                           Question,
-                           Choice,
-                           Answer,
-                           QuestionBranch)
+from survey.models import (Answer, BusinessDirection, BusinessType, Choice,
+                           Question, QuestionBranch, Survey)
 
 admin.site.empty_value_display = 'Не задано'
 
