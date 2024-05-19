@@ -1,71 +1,12 @@
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView
 
-from survey.models import Answer, BusinessDirection, BusinessType, Question
-
-
-class SurveyView(LoginRequiredMixin, TemplateView):
-    """Функция для анкетирования."""
-
-    template_name = 'survey/home.html'
-
-    def get_questions(self):
-        return Question.objects.all().order_by('id')
-
-    def get_business_types(self):
-        return BusinessType.objects.all()
-
-    def get_business_directions(self, business_type_id):
-        if business_type_id:
-            answer = Answer.objects.filter(
-                question_id=5,
-                text=str(business_type_id)
-            ).first()
-            if answer:
-                return answer.question.directions.all()
-        return BusinessDirection.objects.all().order_by('id')
-
-    def get(self, request, *args, **kwargs):
-        questions = self.get_questions()
-        business_types = self.get_business_types()
-        business_type_id = request.GET.get('business_type_id')
-        business_directions = self.get_business_directions(business_type_id)
-        return self.render_to_response({'questions': questions,
-                                        'business_types': business_types,
-                                        'business_directions':
-                                        business_directions})
-
-    def post(self, request, *args, **kwargs):
-        for question in Question.objects.all():
-            answer_text = request.POST.get(f'answer_{question.pk}')
-            if answer_text:
-                Answer.objects.create(question=question, text=answer_text)
-        return redirect('next_survey')
-
-
-class NextSurveyView(LoginRequiredMixin, TemplateView):
-    """Функция для продолжения анкетирования на следующей странице."""
-
-    template_name = 'survey/next_survey.html'
-
-    def get_questions(self):
-        return Question.objects.all().order_by('id')
-
-    def get(self, request, *args, **kwargs):
-        questions = self.get_questions()
-        return self.render_to_response({'questions': questions})
-
-    def post(self, request, *args, **kwargs):
-        for question in Question.objects.all():
-            answer_text = request.POST.get(f'answer_{question.pk}')
-            if answer_text:
-                Answer.objects.create(question=question, text=answer_text)
-        return render(request, 'survey/complete_survey.html')
+from survey.models import Answer, Question, TextResponse
 
 
 class CustomLoginView(LoginView):
@@ -86,3 +27,27 @@ class CustomLogoutView(LoginRequiredMixin, LogoutView):
     """Функция для выхода пользователя."""
 
     template_name = 'logout.html'
+
+
+@login_required
+def survey_view(request, question_id=None):
+    """Функция для анкетирования пользователя."""
+
+    if question_id:
+        question = get_object_or_404(Question, pk=question_id)
+    else:
+        question = Question.objects.first()
+    if request.method == 'POST':
+        if question.question_type == 'choice':
+            selected_answer_id = request.POST.get('answer')
+            selected_answer = get_object_or_404(Answer, pk=selected_answer_id)
+            next_question = selected_answer.next_question
+        elif question.question_type == 'text':
+            text_response = request.POST.get('text_response')
+            TextResponse.objects.create(question=question, response=text_response)
+            next_question = question.next_question
+        if next_question:
+            return redirect('survey_question', question_id=next_question.id)
+        else:
+            return render(request, 'survey/complete_survey.html')
+    return render(request, 'survey/home.html', {'question': question})

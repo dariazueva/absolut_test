@@ -1,24 +1,8 @@
 from django.contrib import admin
 
-from survey.models import (Answer, BusinessDirection, BusinessType, Choice,
-                           Question, QuestionBranch, Survey)
+from survey.models import Answer, Question, TextResponse
 
 admin.site.empty_value_display = 'Не задано'
-
-
-class BusinessTypeInline(admin.TabularInline):
-    model = BusinessType
-    extra = 1
-
-
-class BusinessDirectionInline(admin.TabularInline):
-    model = BusinessDirection
-    extra = 1
-
-
-class SurveyInline(admin.TabularInline):
-    model = Survey
-    extra = 1
 
 
 class QuestionInline(admin.TabularInline):
@@ -26,44 +10,14 @@ class QuestionInline(admin.TabularInline):
     extra = 1
 
 
-@admin.register(BusinessType)
-class BusinessTypeAdmin(admin.ModelAdmin):
-    """Администратор для модели BusinessType."""
-
-    list_display = (
-        'name',
-    )
-    list_display_links = ('name',)
+class AnswerInline(admin.TabularInline):
+    model = Answer
+    extra = 1
 
 
-@admin.register(BusinessDirection)
-class BusinessDirectionAdmin(admin.ModelAdmin):
-    """Администратор для модели BusinessDirection."""
-
-    list_display = (
-        'name',
-        'business_type',
-    )
-    list_editable = (
-        'business_type',
-    )
-    list_display_links = ('name',)
-
-
-@admin.register(Survey)
-class SurveyAdmin(admin.ModelAdmin):
-    """Администратор для модели Survey."""
-
-    list_display = (
-        'title',
-        'business_type',
-        'business_direction',
-    )
-    list_editable = (
-        'business_type',
-        'business_direction',
-    )
-    list_display_links = ('title',)
+class TextResponseInline(admin.TabularInline):
+    model = TextResponse
+    extra = 1
 
 
 @admin.register(Question)
@@ -72,28 +26,10 @@ class QuestionAdmin(admin.ModelAdmin):
 
     list_display = (
         'text',
-        'dynamic',
-        'parent_question',
-        'survey',
+        'question_type',
     )
     list_editable = (
-        'dynamic',
-        'parent_question',
-        'survey',
-    )
-    list_display_links = ('text',)
-
-
-@admin.register(Choice)
-class ChoiceAdmin(admin.ModelAdmin):
-    """Администратор для модели Choice."""
-
-    list_display = (
-        'text',
-        'question',
-    )
-    list_editable = (
-        'question',
+        'question_type',
     )
     list_display_links = ('text',)
 
@@ -105,24 +41,24 @@ class AnswerAdmin(admin.ModelAdmin):
     list_display = (
         'text',
         'question',
+        'next_question',
     )
     list_editable = (
         'question',
+        'next_question',
     )
     list_display_links = ('text',)
 
 
-@admin.register(QuestionBranch)
-class QuestionBranchAdmin(admin.ModelAdmin):
-    """Администратор для модели QuestionBranch."""
+@admin.register(TextResponse)
+class TextResponseAdmin(admin.ModelAdmin):
+    """Администратор для модели TextResponse."""
 
     list_display = (
-        'choice',
+        'response',
         'question',
-        'next_question',
     )
     list_editable = (
         'question',
-        'next_question',
     )
-    list_display_links = ('choice',)
+    list_display_links = ('response',)

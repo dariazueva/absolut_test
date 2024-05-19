@@ -1,59 +1,48 @@
 import csv
 import os
-
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from survey.models import Answer, Question
 
-from survey.models import BusinessDirection, BusinessType, Question, Survey
 
-
-def load_csv_data(file_name, model_class, fields_mapping):
+def load_csv_data(file_name, model_class, fields_mapping, with_foreign_keys=False):
     path = os.path.join(settings.BASE_DIR, 'data', file_name)
     with open(path, 'r', encoding='utf-8') as file:
         reader = csv.reader(file)
-        next(reader)
+        next(reader)  # Пропустить заголовок
         for row in reader:
-            data = {field: row[index] if index is not None and row[index] != ''
-                    else None
-                    for field, index in fields_mapping.items()}
-            model_class.objects.get_or_create(**data)
+            data = {}
+            for field, index in fields_mapping.items():
+                if index is not None:
+                    if with_foreign_keys and field in ['next_question', 'question']:
+                        # Преобразуем внешние ключи в числовые значения и получаем соответствующие объекты
+                        data[field] = Question.objects.get(pk=int(row[index])) if row[index] else None
+                    else:
+                        if field not in ['next_question', 'question'] or row[index]:
+                            data[field] = row[index] if row[index] != '' else None
+
+            if with_foreign_keys:
+                model_class.objects.update_or_create(id=row[0], defaults=data)
+            else:
+                # Создаем или обновляем запись без учета внешних ключей
+                if 'next_question' in data:
+                    del data['next_question']
+                model_class.objects.update_or_create(id=row[0], defaults=data)
 
 
 class Command(BaseCommand):
     help = 'Load data from CSV files'
 
     def handle(self, *args, **options):
-        self.load_business_types()
-        self.load_business_directions()
-        self.load_surveys()
-        self.load_main_questions()
-        self.load_restaurant_survey()
-        self.load_cafe_survey()
+        self.load_questions(with_foreign_keys=False)
+        self.load_questions(with_foreign_keys=True)
+        self.load_answers()
         self.stdout.write(self.style.SUCCESS('Data loaded successfully.'))
 
-    def load_business_types(self):
-        load_csv_data('business_types.csv', BusinessType, {'name': 1})
+    def load_questions(self, with_foreign_keys):
+        fields_mapping = {'id': 0, 'text': 1, 'question_type': 2, 'next_question': 3}
+        load_csv_data('questions.csv', Question, fields_mapping, with_foreign_keys)
 
-    def load_business_directions(self):
-        load_csv_data('business_directions.csv', BusinessDirection,
-                      {'name': 1, 'business_type_id': 2})
-
-    def load_surveys(self):
-        load_csv_data('surveys_collection.csv', Survey,
-                      {'title': 1, 'business_type_id': 2,
-                       'business_direction_id': 3})
-
-    def load_main_questions(self):
-        load_csv_data('main_questions.csv', Question,
-                      {'text': 1, 'dynamic': 2, 'parent_question_id': 3,
-                       'survey_id': 4})
-
-    def load_restaurant_survey(self):
-        load_csv_data('restaurant_survey.csv', Question,
-                      {'text': 1, 'dynamic': 2, 'parent_question_id': 3,
-                       'survey_id': 4})
-
-    def load_cafe_survey(self):
-        load_csv_data('cafe_survey.csv', Question,
-                      {'text': 1, 'dynamic': 2, 'parent_question_id': 3,
-                       'survey_id': 4})
+    def load_answers(self):
+        fields_mapping = {'id': 0, 'text': 1, 'question': 2, 'next_question': 3}
+        load_csv_data('answers.csv', Answer, fields_mapping, with_foreign_keys=True)
