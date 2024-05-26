@@ -6,9 +6,11 @@ class Question(models.Model):
 
     TEXT = 'text'
     CHOICE = 'choice'
+    CHECKBOX = 'checkbox'
     QUESTION_TYPES = [
         (TEXT, 'Text'),
         (CHOICE, 'Choice'),
+        (CHECKBOX, 'Checkbox'),
     ]
 
     text = models.CharField(max_length=255)
@@ -29,7 +31,7 @@ class Question(models.Model):
 
 
 class Answer(models.Model):
-    """Модель ответа."""
+    """Модель ответа с выбором."""
 
     question = models.ForeignKey(Question,
                                  on_delete=models.CASCADE,
@@ -42,20 +44,37 @@ class Answer(models.Model):
     class Meta:
         verbose_name = 'Ответ'
         verbose_name_plural = 'Ответы'
-        ordering = ('text',)
+        ordering = ('question',)
 
     def __str__(self):
         return self.text
 
 
 class TextResponse(models.Model):
+    """Модель текстового ответа."""
+
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     response = models.TextField(max_length=255)
 
     class Meta:
         verbose_name = 'Текстовый ответ'
         verbose_name_plural = 'Текстовые ответы'
-        ordering = ('response',)
+        ordering = ('question',)
+
+    def __str__(self):
+        return self.response
+
+
+class CheckboxResponse(models.Model):
+    """Модель ответа с галочкой."""
+
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    response = models.BooleanField()
+
+    class Meta:
+        verbose_name = 'Ответ с галочкой'
+        verbose_name_plural = 'Ответы с галочкой'
+        ordering = ('question',)
 
     def __str__(self):
         return self.response

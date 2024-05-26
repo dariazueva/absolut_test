@@ -5,6 +5,9 @@
 <form method="post">
     {% csrf_token %}
     <input type="hidden" name="question_id" value="{{ question.id }}">
+    {% if error_message %}
+        <p style="color: red;">{{ error_message }}</p>
+    {% endif %}
     {% if question.question_type == 'choice' %}
         {% for answer in question.answers.all %}
             <label>
@@ -13,9 +16,11 @@
             </label><br>
         {% endfor %}
     {% elif question.question_type == 'text' %}
+        <textarea name="text_response" required></textarea><br>
+    {% elif question.question_type == 'checkbox' %}
         <label>
-            Ответ:
-            <input type="text" name="text_response">
+            <input type="checkbox" name="checkbox_response" value="1" class="larger-checkbox">
+            Отметьте галочкой, если ваше заведение только начало работу
         </label><br>
     {% endif %}
     <button type="submit">Отправить</button>
